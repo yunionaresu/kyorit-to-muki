@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Passenger Compass</title>
+
 <style>
   :root {
     --bg-color: #f0edf4;
@@ -23,9 +24,11 @@
     }
   }
 
-  body, html {
+  html,
+  body {
     margin: 0;
     padding: 0;
+    width: 100%;
     height: 100%;
     font-family: 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--bg-color);
@@ -38,7 +41,7 @@
 
   .texture-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    inset: 0;
     pointer-events: none;
     z-index: 9999;
     opacity: 0.4;
@@ -56,8 +59,9 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 12px 12px 24px var(--shadow-dark), 
-                -12px -12px 24px var(--shadow-light);
+    box-shadow:
+      12px 12px 24px var(--shadow-dark),
+      -12px -12px 24px var(--shadow-light);
     position: relative;
   }
 
@@ -66,9 +70,11 @@
     font-weight: bold;
     padding: 8px 16px;
     border-radius: 20px;
-    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
-                inset -3px -3px 6px var(--shadow-light);
+    box-shadow:
+      inset 3px 3px 6px var(--shadow-dark),
+      inset -3px -3px 6px var(--shadow-light);
     opacity: 0.8;
+    text-align: center;
   }
 
   .compass-container {
@@ -79,8 +85,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 12px 12px 24px var(--shadow-dark), 
-                -12px -12px 24px var(--shadow-light);
+    box-shadow:
+      12px 12px 24px var(--shadow-dark),
+      -12px -12px 24px var(--shadow-light);
   }
 
   .compass-inner {
@@ -91,8 +98,9 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    box-shadow: inset 8px 8px 16px var(--shadow-dark), 
-                inset -8px -8px 16px var(--shadow-light);
+    box-shadow:
+      inset 8px 8px 16px var(--shadow-dark),
+      inset -8px -8px 16px var(--shadow-light);
   }
 
   .direction-arrow-container {
@@ -106,7 +114,7 @@
 
   .direction-arrow {
     position: absolute;
-    top: -10px; 
+    top: -10px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
@@ -128,7 +136,7 @@
     letter-spacing: 1px;
     text-align: center;
   }
-  
+
   .unit {
     font-size: 18px;
     font-weight: normal;
@@ -151,10 +159,12 @@
     color: var(--text-color);
     font-size: 13px;
     box-sizing: border-box;
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), 
-                inset -4px -4px 8px var(--shadow-light);
+    box-shadow:
+      inset 4px 4px 8px var(--shadow-dark),
+      inset -4px -4px 8px var(--shadow-light);
     outline: none;
   }
+
   .coord-input::placeholder {
     color: #a0a0a0;
   }
@@ -168,15 +178,19 @@
     font-weight: bold;
     font-size: 15px;
     cursor: pointer;
-    box-shadow: 6px 6px 12px var(--shadow-dark), 
-                -6px -6px 12px var(--shadow-light);
+    box-shadow:
+      6px 6px 12px var(--shadow-dark),
+      -6px -6px 12px var(--shadow-light);
     transition: all 0.1s;
   }
+
   .btn:active {
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), 
-                inset -4px -4px 8px var(--shadow-light);
+    box-shadow:
+      inset 4px 4px 8px var(--shadow-dark),
+      inset -4px -4px 8px var(--shadow-light);
     color: var(--accent-orange);
   }
+
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -191,194 +205,1215 @@
   }
 </style>
 </head>
+
 <body>
 
 <div class="texture-overlay"></div>
 
 <div class="app-container">
-  <div class="status-badge" id="status">🧭 待機中</div>
+
+  <div class="status-badge" id="status">
+    🧭 待機中
+  </div>
 
   <div class="compass-container">
-    <div class="direction-arrow-container" id="arrowContainer">
+
+    <div
+      class="direction-arrow-container"
+      id="arrowContainer">
       <div class="direction-arrow"></div>
     </div>
+
     <div class="compass-inner">
-      <div class="distance-label">残り</div>
-      <div class="distance-value" id="distanceDisplay">--.<span class="unit">km</span></div>
+
+      <div class="distance-label">
+        残り
+      </div>
+
+      <div
+        class="distance-value"
+        id="distanceDisplay">
+        --.<span class="unit">km</span>
+      </div>
+
     </div>
+
   </div>
 
   <div class="input-section">
-    <input type="text" id="coordInput" class="coord-input" placeholder="Googleマップの共有URLをペースト">
-    <button id="startBtn" class="btn">ナビ開始</button>
-    <div class="hint" id="errorHint" style="display:none;">
-      ※URL解析に失敗しました。<br>マップ上で建物のない道路を長押しして表示される<br>「35.xxx, 139.xxx」の数値を直接入力してください。
+
+    <input
+      type="text"
+      id="coordInput"
+      class="coord-input"
+      placeholder="Googleマップの共有URLをペースト"
+      autocomplete="off"
+      autocapitalize="none"
+      spellcheck="false">
+
+    <button
+      id="startBtn"
+      class="btn">
+      ナビ開始
+    </button>
+
+    <div
+      class="hint"
+      id="errorHint"
+      style="display:none;">
+      ※URLから座標を取得できませんでした。<br>
+      Googleマップで場所を長押しして表示される<br>
+      「35.xxx, 136.xxx」の数値を直接入力してください。
     </div>
+
   </div>
+
 </div>
 
+
 <script>
-  const arrowContainer = document.getElementById('arrowContainer');
-  const distanceDisplay = document.getElementById('distanceDisplay');
-  const statusBadge = document.getElementById('status');
-  const coordInput = document.getElementById('coordInput');
-  const startBtn = document.getElementById('startBtn');
-  const errorHint = document.getElementById('errorHint');
 
-  let destLat = null, destLng = null;
-  let currentLat = null, currentLng = null;
-  let targetBearing = 0; 
-  let deviceHeading = 0; 
+"use strict";
 
-  function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const arrowContainer =
+  document.getElementById("arrowContainer");
+
+const distanceDisplay =
+  document.getElementById("distanceDisplay");
+
+const statusBadge =
+  document.getElementById("status");
+
+const coordInput =
+  document.getElementById("coordInput");
+
+const startBtn =
+  document.getElementById("startBtn");
+
+const errorHint =
+  document.getElementById("errorHint");
+
+
+/* =========================================================
+   State
+========================================================= */
+
+let destLat = null;
+let destLng = null;
+
+let currentLat = null;
+let currentLng = null;
+
+let targetBearing = 0;
+let deviceHeading = 0;
+
+let watchId = null;
+
+
+/* =========================================================
+   Distance
+========================================================= */
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+
+  const R = 6371;
+
+  const dLat =
+    (lat2 - lat1) * Math.PI / 180;
+
+  const dLon =
+    (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) *
+    Math.sin(dLat / 2) +
+
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
+
+  return R *
+    (2 * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    ));
+}
+
+
+/* =========================================================
+   Bearing
+========================================================= */
+
+function calculateBearing(lat1, lon1, lat2, lon2) {
+
+  const lat1Rad =
+    lat1 * Math.PI / 180;
+
+  const lat2Rad =
+    lat2 * Math.PI / 180;
+
+  const lonDiff =
+    (lon2 - lon1) * Math.PI / 180;
+
+  const y =
+    Math.sin(lonDiff) *
+    Math.cos(lat2Rad);
+
+  const x =
+    Math.cos(lat1Rad) *
+    Math.sin(lat2Rad) -
+
+    Math.sin(lat1Rad) *
+    Math.cos(lat2Rad) *
+    Math.cos(lonDiff);
+
+  return (
+    Math.atan2(y, x) *
+    180 / Math.PI +
+    360
+  ) % 360;
+}
+
+
+/* =========================================================
+   UI
+========================================================= */
+
+function updateUI() {
+
+  if (
+    currentLat !== null &&
+    currentLng !== null &&
+    destLat !== null &&
+    destLng !== null
+  ) {
+
+    const distKm =
+      calculateDistance(
+        currentLat,
+        currentLng,
+        destLat,
+        destLng
+      );
+
+    distanceDisplay.innerHTML =
+      `${distKm.toFixed(1)}<span class="unit">km</span>`;
+
+    targetBearing =
+      calculateBearing(
+        currentLat,
+        currentLng,
+        destLat,
+        destLng
+      );
   }
 
-  function calculateBearing(lat1, lon1, lat2, lon2) {
-    const lat1Rad = lat1 * Math.PI / 180, lat2Rad = lat2 * Math.PI / 180;
-    const lonDiff = (lon2 - lon1) * Math.PI / 180;
-    const y = Math.sin(lonDiff) * Math.cos(lat2Rad);
-    const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(lonDiff);
-    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  arrowContainer.style.transform =
+    `rotate(${targetBearing - deviceHeading}deg)`;
+}
+
+
+/* =========================================================
+   Orientation
+========================================================= */
+
+function handleOrientation(event) {
+
+  if (
+    event.webkitCompassHeading !== undefined &&
+    event.webkitCompassHeading !== null
+  ) {
+
+    deviceHeading =
+      event.webkitCompassHeading;
+
+  } else if (
+    event.absolute === true &&
+    event.alpha !== null
+  ) {
+
+    deviceHeading =
+      (360 - event.alpha) % 360;
   }
 
-  function updateUI() {
-    if (currentLat !== null && destLat !== null) {
-      const distKm = calculateDistance(currentLat, currentLng, destLat, destLng);
-      distanceDisplay.innerHTML = `${distKm.toFixed(1)}<span class="unit">km</span>`;
-      targetBearing = calculateBearing(currentLat, currentLng, destLat, destLng);
+  updateUI();
+}
+
+
+/* =========================================================
+   Sensors
+========================================================= */
+
+function startSensors() {
+
+  statusBadge.innerText =
+    "⚡️ センサー起動中...";
+
+  errorHint.style.display =
+    "none";
+
+
+  window.removeEventListener(
+    "deviceorientation",
+    handleOrientation,
+    true
+  );
+
+  window.removeEventListener(
+    "deviceorientationabsolute",
+    handleOrientation,
+    true
+  );
+
+
+  if (
+    "ondeviceorientationabsolute" in window
+  ) {
+
+    window.addEventListener(
+      "deviceorientationabsolute",
+      handleOrientation,
+      true
+    );
+
+  } else {
+
+    window.addEventListener(
+      "deviceorientation",
+      handleOrientation,
+      true
+    );
+  }
+
+
+  if (!navigator.geolocation) {
+
+    statusBadge.innerText =
+      "⚠️ GPS非対応";
+
+    return;
+  }
+
+
+  if (watchId !== null) {
+
+    navigator.geolocation.clearWatch(
+      watchId
+    );
+  }
+
+
+  watchId =
+    navigator.geolocation.watchPosition(
+
+      (position) => {
+
+        currentLat =
+          position.coords.latitude;
+
+        currentLng =
+          position.coords.longitude;
+
+        statusBadge.innerText =
+          "🛰️ 案内中";
+
+        updateUI();
+      },
+
+      (error) => {
+
+        console.error(
+          "GPS error:",
+          error
+        );
+
+        statusBadge.innerText =
+          "⚠️ GPSエラー";
+      },
+
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000
+      }
+    );
+}
+
+
+/* =========================================================
+   Timeout付きfetch
+========================================================= */
+
+async function fetchWithTimeout(
+  url,
+  timeoutMs = 8000
+) {
+
+  const controller =
+    new AbortController();
+
+  const timer =
+    setTimeout(
+      () => controller.abort(),
+      timeoutMs
+    );
+
+  try {
+
+    const response =
+      await fetch(
+        url,
+        {
+          signal:
+            controller.signal,
+          redirect: "follow"
+        }
+      );
+
+    return response;
+
+  } finally {
+
+    clearTimeout(timer);
+  }
+}
+
+
+/* =========================================================
+   座標の妥当性確認
+========================================================= */
+
+function validCoordinate(lat, lng) {
+
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
+
+
+/* =========================================================
+   Google Maps URL内から座標を探す
+========================================================= */
+
+function extractCoordinates(text) {
+
+  if (!text) {
+    return null;
+  }
+
+
+  /*
+   * @35.123456,136.123456
+   */
+
+  let match =
+    text.match(
+      /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/i
+    );
+
+  if (match) {
+
+    const lat =
+      parseFloat(match[1]);
+
+    const lng =
+      parseFloat(match[2]);
+
+    if (
+      validCoordinate(lat, lng)
+    ) {
+
+      return {
+        lat: lat,
+        lng: lng,
+        source: "@"
+      };
     }
-    arrowContainer.style.transform = `rotate(${targetBearing - deviceHeading}deg)`;
   }
 
-  function handleOrientation(event) {
-    if (event.webkitCompassHeading !== undefined) deviceHeading = event.webkitCompassHeading;
-    else if (event.absolute === true && event.alpha !== null) deviceHeading = 360 - event.alpha;
-    updateUI();
+
+  /*
+   * !3d35.123456!4d136.123456
+   */
+
+  match =
+    text.match(
+      /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/i
+    );
+
+  if (match) {
+
+    const lat =
+      parseFloat(match[1]);
+
+    const lng =
+      parseFloat(match[2]);
+
+    if (
+      validCoordinate(lat, lng)
+    ) {
+
+      return {
+        lat: lat,
+        lng: lng,
+        source: "!3d!4d"
+      };
+    }
   }
 
-  function startSensors() {
-    statusBadge.innerText = "⚡️ センサー起動中...";
-    errorHint.style.display = "none";
-    if ('ondeviceorientationabsolute' in window) window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-    else window.addEventListener('deviceorientation', handleOrientation, true);
 
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (position) => {
-          currentLat = position.coords.latitude;
-          currentLng = position.coords.longitude;
-          statusBadge.innerText = "🛰️ 案内中";
-          updateUI();
-        },
-        (error) => { statusBadge.innerText = "⚠️ GPSエラー"; },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+  /*
+   * destination=35.123456,136.123456
+   */
+
+  match =
+    text.match(
+      /destination=(-?\d+(?:\.\d+)?)[,%](-?\d+(?:\.\d+)?)/i
+    );
+
+  if (match) {
+
+    const lat =
+      parseFloat(match[1]);
+
+    const lng =
+      parseFloat(match[2]);
+
+    if (
+      validCoordinate(lat, lng)
+    ) {
+
+      return {
+        lat: lat,
+        lng: lng,
+        source: "destination"
+      };
+    }
+  }
+
+
+  /*
+   * center=35.123456,136.123456
+   */
+
+  match =
+    text.match(
+      /center=(-?\d+(?:\.\d+)?)[,%](-?\d+(?:\.\d+)?)/i
+    );
+
+  if (match) {
+
+    const lat =
+      parseFloat(match[1]);
+
+    const lng =
+      parseFloat(match[2]);
+
+    if (
+      validCoordinate(lat, lng)
+    ) {
+
+      return {
+        lat: lat,
+        lng: lng,
+        source: "center"
+      };
+    }
+  }
+
+
+  /*
+   * q=35.123456,136.123456
+   */
+
+  match =
+    text.match(
+      /[?&]q=(-?\d+(?:\.\d+)?)[,%](-?\d+(?:\.\d+)?)/i
+    );
+
+  if (match) {
+
+    const lat =
+      parseFloat(match[1]);
+
+    const lng =
+      parseFloat(match[2]);
+
+    if (
+      validCoordinate(lat, lng)
+    ) {
+
+      return {
+        lat: lat,
+        lng: lng,
+        source: "q"
+      };
+    }
+  }
+
+
+  return null;
+}
+
+
+/* =========================================================
+   直接入力された座標
+========================================================= */
+
+function extractDirectCoordinates(input) {
+
+  const match =
+    input.match(
+      /(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/
+    );
+
+  if (!match) {
+    return null;
+  }
+
+
+  const lat =
+    parseFloat(match[1]);
+
+  const lng =
+    parseFloat(match[2]);
+
+
+  if (
+    !validCoordinate(lat, lng)
+  ) {
+
+    return null;
+  }
+
+
+  return {
+    lat: lat,
+    lng: lng,
+    source: "direct"
+  };
+}
+
+
+/* =========================================================
+   入力文字列からURLを取り出す
+========================================================= */
+
+function extractURL(input) {
+
+  const trimmed =
+    input.trim();
+
+
+  /*
+   * URLだけの場合
+   */
+
+  try {
+
+    if (
+      /^https?:\/\//i.test(trimmed)
+    ) {
+
+      return new URL(trimmed);
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "URL parse error:",
+      error
+    );
+  }
+
+
+  /*
+   * 文章の中にURLが含まれている場合
+   */
+
+  const match =
+    input.match(
+      /https?:\/\/[^\s]+/i
+    );
+
+  if (!match) {
+    return null;
+  }
+
+
+  try {
+
+    return new URL(
+      match[0].replace(
+        /[）)、。]+$/,
+        ""
+      )
+    );
+
+  } catch (error) {
+
+    return null;
+  }
+}
+
+
+/* =========================================================
+   Google Maps URLを展開して座標取得
+========================================================= */
+
+async function extractCoordinatesFromUrl(
+  targetUrl
+) {
+
+  /*
+   * まずURL自身に座標が入っている場合
+   */
+
+  const direct =
+    extractCoordinates(
+      targetUrl.href
+    );
+
+  if (direct) {
+    return direct;
+  }
+
+
+  /*
+   * Google Maps短縮URL
+   */
+
+  const isShortGoogleUrl =
+    /(^|\.)maps\.app\.goo\.gl$/i.test(
+      targetUrl.hostname
+    );
+
+
+  /*
+   * 使用するCORSプロキシ
+   */
+
+  const proxies = [
+
+    {
+      name: "allorigins",
+
+      url:
+        "https://api.allorigins.win/get?url=" +
+        encodeURIComponent(
+          targetUrl.href
+        )
+    },
+
+    {
+      name: "codetabs",
+
+      url:
+        "https://api.codetabs.com/v1/proxy?quest=" +
+        encodeURIComponent(
+          targetUrl.href
+        )
+    }
+  ];
+
+
+  let lastError = null;
+
+
+  for (
+    const proxy of proxies
+  ) {
+
+    try {
+
+      statusBadge.innerText =
+        `🌐 URL展開中...`;
+
+
+      const response =
+        await fetchWithTimeout(
+          proxy.url,
+          8000
+        );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          `HTTP ${response.status}`
+        );
+      }
+
+
+      let text = "";
+
+
+      /*
+       * allorigins
+       */
+
+      if (
+        proxy.name === "allorigins"
+      ) {
+
+        const data =
+          await response.json();
+
+        /*
+         * alloriginsのレスポンスに
+         * リダイレクト後URLが存在する場合
+         */
+
+        if (data.url) {
+
+          const finalUrlCoordinates =
+            extractCoordinates(
+              data.url
+            );
+
+          if (
+            finalUrlCoordinates
+          ) {
+
+            return finalUrlCoordinates;
+          }
+        }
+
+        text =
+          data.contents || "";
+
+      } else {
+
+        text =
+          await response.text();
+      }
+
+
+      /*
+       * HTML / レスポンス全体から探す
+       */
+
+      let result =
+        extractCoordinates(
+          text
+        );
+
+      if (result) {
+        return result;
+      }
+
+
+      /*
+       * URLエンコード解除
+       */
+
+      try {
+
+        const decoded =
+          decodeURIComponent(
+            text
+          );
+
+        result =
+          extractCoordinates(
+            decoded
+          );
+
+        if (result) {
+          return result;
+        }
+
+      } catch (error) {
+      }
+
+
+      /*
+       * HTML内にGoogle Maps URLが
+       * 入っているケース
+       */
+
+      const googleUrls =
+        text.match(
+          /https?:\/\/(?:www\.)?google\.[^\s"'<>]+/gi
+        );
+
+
+      if (googleUrls) {
+
+        for (
+          const googleUrl of googleUrls
+        ) {
+
+          result =
+            extractCoordinates(
+              googleUrl
+            );
+
+          if (result) {
+            return result;
+          }
+        }
+      }
+
+
+      /*
+       * Google Mapsの座標らしき数値を探索
+       *
+       * 日本国内の座標に限定することで
+       * HTML内の別の数値を誤認しにくくする
+       */
+
+      const coordinatePatterns = [
+
+        /(-?\d{1,3}\.\d{5,}),(-?\d{1,3}\.\d{5,})/g,
+
+        /(-?\d{1,3}\.\d{5,})%2C(-?\d{1,3}\.\d{5,})/gi,
+
+        /(-?\d{1,3}\.\d{5,})%2[cC](-?\d{1,3}\.\d{5,})/g
+      ];
+
+
+      for (
+        const pattern of coordinatePatterns
+      ) {
+
+        const matches =
+          text.matchAll(
+            pattern
+          );
+
+
+        for (
+          const match of matches
+        ) {
+
+          const lat =
+            parseFloat(
+              match[1]
+            );
+
+          const lng =
+            parseFloat(
+              match[2]
+            );
+
+
+          if (
+            validCoordinate(
+              lat,
+              lng
+            ) &&
+            lat >= 20 &&
+            lat <= 46 &&
+            lng >= 122 &&
+            lng <= 154
+          ) {
+
+            return {
+              lat: lat,
+              lng: lng,
+              source: "google-coordinate"
+            };
+          }
+        }
+      }
+
+    } catch (error) {
+
+      console.warn(
+        `${proxy.name} failed:`,
+        error
+      );
+
+      lastError =
+        error;
+    }
+  }
+
+
+  /*
+   * 最後に元URLをもう一度解析
+   */
+
+  const fallback =
+    extractCoordinates(
+      targetUrl.href
+    );
+
+  if (fallback) {
+    return fallback;
+  }
+
+
+  if (isShortGoogleUrl) {
+
+    throw new Error(
+      "Google Maps短縮URLを展開できませんでした"
+    );
+  }
+
+
+  throw (
+    lastError ||
+    new Error(
+      "座標を特定できませんでした"
+    )
+  );
+}
+
+
+/* =========================================================
+   iPhone コンパス許可
+========================================================= */
+
+async function requestSensorPermission() {
+
+  if (
+    typeof DeviceOrientationEvent !==
+    "undefined" &&
+
+    typeof DeviceOrientationEvent.requestPermission ===
+    "function"
+  ) {
+
+    const permission =
+      await DeviceOrientationEvent
+        .requestPermission();
+
+
+    if (
+      permission !== "granted"
+    ) {
+
+      throw new Error(
+        "コンパスが許可されませんでした"
       );
     }
   }
+}
 
-  // タイムアウト付きのフェッチ関数（フリーズ防止）
-  async function fetchWithTimeout(url, timeoutMs = 6000) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeoutMs);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(id);
-    return response;
-  }
 
-  // GoogleマップURLの展開・解析ロジック
-  async function extractCoordinatesFromUrl(targetUrl) {
-    // フリーズ回避のため、複数のプロキシサービスを順番に試行する
-    const proxies = [
-      `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`,
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
-    ];
+/* =========================================================
+   ナビ開始
+========================================================= */
 
-    for (let proxy of proxies) {
-      try {
-        const response = await fetchWithTimeout(proxy, 6000);
-        let htmlStr = '';
-        
-        if (proxy.includes('allorigins')) {
-          const data = await response.json();
-          htmlStr = data.contents || '';
-        } else {
-          htmlStr = await response.text();
-        }
-
-        if (!htmlStr) continue;
-
-        // 正規表現で座標らしきものを強力に探す（小数点3桁以上）
-        const regexes = [
-          /center=(-?\d+\.\d{3,})(?:%2C|,)(-?\d+\.\d{3,})/, // OGP画像用
-          /@(-?\d+\.\d{3,}),(-?\d+\.\d{3,})/,               // リダイレクトURL用
-          /ll=(-?\d+\.\d{3,})(?:%2C|,)(-?\d+\.\d{3,})/      // レガシーURL用
-        ];
-
-        for (let rx of regexes) {
-          const match = htmlStr.match(rx);
-          if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
-        }
-      } catch (e) {
-        console.warn("Proxy failed, trying next...", e);
-      }
-    }
-    throw new Error("座標を特定できませんでした");
-  }
-
-  startBtn.addEventListener('click', async () => {
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      try {
-        const permission = await DeviceOrientationEvent.requestPermission();
-        if (permission !== 'granted') return alert('コンパスが許可されませんでした。');
-      } catch (e) { console.error(e); }
-    }
-
-    const inputVal = coordInput.value;
-    if (!inputVal) return;
-
-    startBtn.disabled = true;
-    errorHint.style.display = "none";
-    statusBadge.innerText = "🔍 解析中...";
+startBtn.addEventListener(
+  "click",
+  async () => {
 
     try {
-      // 1. まず「緯度, 経度」の直接入力かチェック
-      const coordMatch = inputVal.match(/(-?\d+\.\d{3,})\s*,\s*(-?\d+\.\d{3,})/);
-      if (coordMatch) {
-        destLat = parseFloat(coordMatch[1]);
-        destLng = parseFloat(coordMatch[2]);
-        startSensors();
-        startBtn.disabled = false;
-        return;
-      }
 
-      // 2. GoogleマップURLが含まれているかチェック
-      const urlMatch = inputVal.match(/https?:\/\/[^\s]+/);
-      if (urlMatch) {
-        statusBadge.innerText = "🌐 展開中...";
-        const coords = await extractCoordinatesFromUrl(urlMatch[0]);
-        destLat = coords.lat;
-        destLng = coords.lng;
-        startSensors();
-        startBtn.disabled = false;
-        return;
-      }
+      /*
+       * iPhoneではユーザー操作中に
+       * センサー許可を要求する
+       */
 
-      throw new Error("無効な入力です");
+      await requestSensorPermission();
 
     } catch (error) {
-      console.error(error);
-      statusBadge.innerText = "⚠️ 解析エラー";
-      errorHint.style.display = "block"; // 代替手段をユーザーに表示
-      startBtn.disabled = false;
+
+      console.error(
+        error
+      );
+
+      alert(
+        "コンパスの使用が許可されませんでした。"
+      );
+
+      return;
     }
-  });
+
+
+    const inputVal =
+      coordInput.value.trim();
+
+
+    if (!inputVal) {
+
+      coordInput.focus();
+
+      return;
+    }
+
+
+    startBtn.disabled =
+      true;
+
+    errorHint.style.display =
+      "none";
+
+    statusBadge.innerText =
+      "🔍 解析中...";
+
+
+    try {
+
+      /*
+       * ==========================================
+       * 1. 緯度,経度の直接入力
+       * ==========================================
+       */
+
+      const direct =
+        extractDirectCoordinates(
+          inputVal
+        );
+
+
+      if (direct) {
+
+        destLat =
+          direct.lat;
+
+        destLng =
+          direct.lng;
+
+        statusBadge.innerText =
+          "📍 目的地設定済み";
+
+        startSensors();
+
+        return;
+      }
+
+
+      /*
+       * ==========================================
+       * 2. Google Maps URL
+       * ==========================================
+       */
+
+      const url =
+        extractURL(
+          inputVal
+        );
+
+
+      if (!url) {
+
+        throw new Error(
+          "URLを認識できませんでした"
+        );
+      }
+
+
+      statusBadge.innerText =
+        "🌐 URLを展開しています...";
+
+
+      const coords =
+        await extractCoordinatesFromUrl(
+          url
+        );
+
+
+      if (
+        !coords ||
+        !validCoordinate(
+          coords.lat,
+          coords.lng
+        )
+      ) {
+
+        throw new Error(
+          "有効な座標を取得できませんでした"
+        );
+      }
+
+
+      destLat =
+        coords.lat;
+
+      destLng =
+        coords.lng;
+
+
+      console.log(
+        "目的地座標:",
+        destLat,
+        destLng,
+        "取得方法:",
+        coords.source
+      );
+
+
+      statusBadge.innerText =
+        "📍 目的地設定済み";
+
+
+      startSensors();
+
+
+    } catch (error) {
+
+      console.error(
+        "解析エラー:",
+        error
+      );
+
+      statusBadge.innerText =
+        "⚠️ URL解析エラー";
+
+      errorHint.style.display =
+        "block";
+
+    } finally {
+
+      startBtn.disabled =
+        false;
+    }
+  }
+);
+
+
+/* =========================================================
+   貼り付け時
+========================================================= */
+
+coordInput.addEventListener(
+  "paste",
+  () => {
+
+    setTimeout(
+      () => {
+
+        if (
+          coordInput.value.trim()
+        ) {
+
+          errorHint.style.display =
+            "none";
+
+          statusBadge.innerText =
+            "📋 URLを受け取りました";
+        }
+
+      },
+      50
+    );
+  }
+);
+
+
+/* =========================================================
+   初期状態
+========================================================= */
+
+statusBadge.innerText =
+  "🧭 待機中";
+
 </script>
+
 </body>
 </html>
