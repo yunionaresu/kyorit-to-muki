@@ -2,15 +2,16 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simple Passenger Compass</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Passenger Compass</title>
 <style>
   :root {
     --bg-color: #f0edf4;
     --text-color: #333333;
     --shadow-light: #ffffff;
     --shadow-dark: #d5d1dd;
-    --accent-green: #a4c639; /* 黄緑色 */
+    --accent-green: #a4c639;
+    --accent-orange: #f28500;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -32,11 +33,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: background-color 0.3s, color 0.3s;
-    overflow: hidden;
+    overflow: hidden; /* スクロール防止 */
   }
 
-  /* シボ加工（マットな質感） */
+  /* 上質なマット・シボ加工 */
   .texture-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -49,24 +49,21 @@
 
   .app-container {
     width: 350px;
-    height: 600px; /* 少しコンパクトに */
+    height: 650px;
     border-radius: 40px;
-    padding: 40px 20px;
+    padding: 30px 20px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* 中央寄せ */
+    justify-content: space-between;
     align-items: center;
     box-shadow: 12px 12px 24px var(--shadow-dark), 
                 -12px -12px 24px var(--shadow-light);
     position: relative;
   }
 
-  /* GPSステータス表示（最小限に） */
   .status-badge {
-    position: absolute;
-    top: 30px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: bold;
     padding: 8px 16px;
     border-radius: 20px;
@@ -75,11 +72,11 @@
     opacity: 0.8;
   }
 
-  /* コンパスデザイン */
+  /* 羅針盤（コンパス）エリア */
   .compass-container {
     position: relative;
-    width: 260px;
-    height: 260px;
+    width: 250px;
+    height: 250px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -89,8 +86,8 @@
   }
 
   .compass-inner {
-    width: 210px;
-    height: 210px;
+    width: 200px;
+    height: 200px;
     border-radius: 50%;
     display: flex;
     flex-direction: column;
@@ -106,13 +103,13 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    transition: transform 0.2s ease-out; /* リアルタイム更新のため短めに */
+    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 10;
   }
 
   .direction-arrow {
     position: absolute;
-    top: -15px; 
+    top: -10px; 
     left: 50%;
     transform: translateX(-50%);
     width: 0;
@@ -124,41 +121,71 @@
   }
 
   .distance-label {
-    font-size: 18px;
-    margin-bottom: 5px;
+    font-size: 16px;
+    margin-bottom: 2px;
   }
 
   .distance-value {
-    font-size: 48px;
+    font-size: 42px;
     font-weight: 600;
     letter-spacing: 1px;
     text-align: center;
   }
   
   .unit {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: normal;
   }
 
-  /* 起動ボタン（センサー許可のため必要） */
-  #startButton {
-    position: absolute;
-    bottom: 40px;
-    padding: 15px 30px;
+  /* 入力・操作エリア */
+  .input-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+  }
+
+  .coord-input {
+    width: 100%;
+    padding: 15px;
     border: none;
-    border-radius: 25px;
+    border-radius: 15px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 13px;
+    box-sizing: border-box;
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                inset -4px -4px 8px var(--shadow-light);
+    outline: none;
+  }
+  .coord-input::placeholder {
+    color: #a0a0a0;
+  }
+
+  .btn {
+    padding: 15px;
+    border: none;
+    border-radius: 15px;
     background-color: var(--bg-color);
     color: var(--text-color);
     font-weight: bold;
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
     box-shadow: 6px 6px 12px var(--shadow-dark), 
                 -6px -6px 12px var(--shadow-light);
+    transition: all 0.1s;
   }
-  #startButton:active {
+  .btn:active {
     box-shadow: inset 4px 4px 8px var(--shadow-dark), 
                 inset -4px -4px 8px var(--shadow-light);
+    color: var(--accent-orange);
   }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
 </style>
 </head>
 <body>
@@ -166,8 +193,10 @@
 <div class="texture-overlay"></div>
 
 <div class="app-container">
-  <div class="status-badge" id="status">⚡️ GPS待機中</div>
+  <!-- ステータス -->
+  <div class="status-badge" id="status">🧭 待機中</div>
 
+  <!-- コンパス -->
   <div class="compass-container">
     <div class="direction-arrow-container" id="arrowContainer">
       <div class="direction-arrow"></div>
@@ -178,27 +207,28 @@
     </div>
   </div>
 
-  <button id="startButton">ナビを開始</button>
+  <!-- 下部：入力・操作エリア -->
+  <div class="input-section">
+    <input type="text" id="coordInput" class="coord-input" placeholder="緯度,経度 または マップの共有URL">
+    <button id="startBtn" class="btn">目的地を設定 ＆ ナビ開始</button>
+  </div>
 </div>
 
 <script>
-  // --- 設定：目的地座標（例：東京タワー） ---
-  const DEST_LAT = 35.6585805;
-  const DEST_LNG = 139.7454329;
-
   const arrowContainer = document.getElementById('arrowContainer');
   const distanceDisplay = document.getElementById('distanceDisplay');
   const statusBadge = document.getElementById('status');
-  const startButton = document.getElementById('startButton');
+  const coordInput = document.getElementById('coordInput');
+  const startBtn = document.getElementById('startBtn');
 
-  let currentLat = null;
-  let currentLng = null;
+  let destLat = null, destLng = null;
+  let currentLat = null, currentLng = null;
   let targetBearing = 0; // 目的地の方位角
-  let deviceHeading = 0; // スマホが向いている方角
+  let deviceHeading = 0; // スマホが向いている方角 (北が0)
 
-  // 1. 2点間の距離を計算する関数 (Haversine formula)
+  // 1. 距離を計算 (Haversine formula)
   function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // 地球の半径(km)
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -208,7 +238,7 @@
     return R * c;
   }
 
-  // 2. 2点間の方位角を計算する関数 (北を0度とした時計回りの角度)
+  // 2. 目的地の方位角を計算 (真北を0度)
   function calculateBearing(lat1, lon1, lat2, lon2) {
     const lat1Rad = lat1 * Math.PI / 180;
     const lat2Rad = lat2 * Math.PI / 180;
@@ -218,29 +248,61 @@
     return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
   }
 
-  // 画面の表示を更新する処理
+  // 3. UIの更新ループ (羅針盤の回転処理)
   function updateUI() {
-    if (currentLat !== null && currentLng !== null) {
-      // 距離を計算して表示 (小数点第1位まで)
-      const distKm = calculateDistance(currentLat, currentLng, DEST_LAT, DEST_LNG);
+    if (currentLat !== null && destLat !== null) {
+      const distKm = calculateDistance(currentLat, currentLng, destLat, destLng);
       distanceDisplay.innerHTML = `${distKm.toFixed(1)}<span class="unit">km</span>`;
-
-      // 目的地の方位を計算
-      targetBearing = calculateBearing(currentLat, currentLng, DEST_LAT, DEST_LNG);
+      targetBearing = calculateBearing(currentLat, currentLng, destLat, destLng);
     }
-
-    // 矢印の回転角度 = 目的地の方位 - スマホが向いている方位
+    // 羅針盤の矢印の向き ＝ 目的地の方位 − スマホが向いている方位
     let rotation = targetBearing - deviceHeading;
     arrowContainer.style.transform = `rotate(${rotation}deg)`;
   }
 
-  // コンパスとGPSの起動
-  startButton.addEventListener('click', async () => {
-    startButton.style.display = 'none'; // ボタンを隠す
-    statusBadge.innerText = "⚡️ GPS測位中...";
+  // 4. デバイスの向き（ジャイロ・コンパス）取得
+  function handleOrientation(event) {
+    if (event.webkitCompassHeading !== undefined) {
+      deviceHeading = event.webkitCompassHeading; // iOS用
+    } else if (event.absolute === true && event.alpha !== null) {
+      deviceHeading = 360 - event.alpha; // Android用
+    }
+    updateUI();
+  }
 
-    // iOS 13+ コンパスの許可リクエスト
-    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+  // 5. GPS・センサーの監視を開始する処理
+  function startSensors() {
+    statusBadge.innerText = "⚡️ センサー起動中...";
+
+    // 羅針盤のイベントリスナー登録
+    if ('ondeviceorientationabsolute' in window) {
+      window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    } else {
+      window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+
+    // GPS取得開始
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          currentLat = position.coords.latitude;
+          currentLng = position.coords.longitude;
+          statusBadge.innerText = "🛰️ 案内中";
+          updateUI();
+        },
+        (error) => {
+          statusBadge.innerText = "⚠️ GPSエラー";
+          console.warn(error);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+    }
+  }
+
+  // 6. 入力値の解析と実行（短縮URLの展開ハック含む）
+  startBtn.addEventListener('click', async () => {
+    // 【重要】非同期処理（fetch等）の前にiOSのセンサー許可をリクエストする
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
       try {
         const permission = await DeviceOrientationEvent.requestPermission();
         if (permission !== 'granted') {
@@ -248,36 +310,70 @@
           return;
         }
       } catch (e) {
-        console.error(e);
+        console.error("センサー許可エラー", e);
       }
     }
 
-    // デバイスの向きを取得
-    window.addEventListener('deviceorientationabsolute', (event) => {
-      if (event.webkitCompassHeading) {
-        deviceHeading = event.webkitCompassHeading; // iOS用
-      } else if (event.alpha) {
-        deviceHeading = 360 - event.alpha; // Android等用
-      }
-      updateUI();
-    }, true);
+    const inputVal = coordInput.value;
+    if (!inputVal) return;
 
-    // GPS座標を継続的に取得
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (position) => {
-          currentLat = position.coords.latitude;
-          currentLng = position.coords.longitude;
-          statusBadge.innerText = "⚡️ GPS連動中";
-          updateUI();
-        },
-        (error) => {
-          statusBadge.innerText = "⚠️ GPSエラー";
-        },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-      );
-    } else {
-      alert("お使いの端末はGPSに対応していません。");
+    startBtn.disabled = true;
+    statusBadge.innerText = "🔍 解析中...";
+
+    try {
+      // パターンA: 緯度,経度 の直接入力 (例: 35.68, 139.76)
+      const coordMatch = inputVal.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+      if (coordMatch) {
+        destLat = parseFloat(coordMatch[1]);
+        destLng = parseFloat(coordMatch[2]);
+        startSensors();
+        startBtn.disabled = false;
+        return;
+      }
+
+      // パターンB: Googleマップ共有URLが含まれている場合
+      const urlMatch = inputVal.match(/https?:\/\/[^\s]+/);
+      if (urlMatch) {
+        const targetUrl = urlMatch[0];
+        statusBadge.innerText = "🌐 URL展開中...";
+        
+        // CORS回避の無料プロキシを利用して短縮URLを展開・HTML取得
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+
+        if (!data.contents) throw new Error("ページ取得に失敗");
+
+        // 展開後のURLに @緯度,経度 が含まれるかチェック
+        const urlCoordMatch = data.url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (urlCoordMatch) {
+          destLat = parseFloat(urlCoordMatch[1]);
+          destLng = parseFloat(urlCoordMatch[2]);
+          startSensors();
+          startBtn.disabled = false;
+          return;
+        }
+
+        // URLになければHTML内のOGP画像URLから center=緯度,経度 を探す
+        const metaCoordMatch = data.contents.match(/center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)/);
+        if (metaCoordMatch) {
+          destLat = parseFloat(metaCoordMatch[1]);
+          destLng = parseFloat(metaCoordMatch[2]);
+          startSensors();
+          startBtn.disabled = false;
+          return;
+        }
+
+        throw new Error("URLから座標が見つかりませんでした");
+      }
+
+      throw new Error("有効な座標またはURLを入力してください");
+
+    } catch (error) {
+      console.error(error);
+      alert("解析に失敗しました。URLではなく「緯度, 経度」を直接入力して試してください。\n" + error.message);
+      statusBadge.innerText = "🧭 待機中";
+      startBtn.disabled = false;
     }
   });
 
