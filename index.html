@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Passenger Compass</title>
+<style>
+  :root {
+    --bg-color: #f0edf4;
+    --text-color: #333333;
+    --shadow-light: #ffffff;
+    --shadow-dark: #d5d1dd;
+    --accent-green: #a4c639; /* 黄緑色 */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-color: #1e1e1e;
+      --text-color: #a0a0a0;
+      --shadow-light: #2c2c2c;
+      --shadow-dark: #101010;
+    }
+  }
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s, color 0.3s;
+    overflow: hidden;
+  }
+
+  /* シボ加工（マットな質感） */
+  .texture-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  .app-container {
+    width: 350px;
+    height: 600px; /* 少しコンパクトに */
+    border-radius: 40px;
+    padding: 40px 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 中央寄せ */
+    align-items: center;
+    box-shadow: 12px 12px 24px var(--shadow-dark), 
+                -12px -12px 24px var(--shadow-light);
+    position: relative;
+  }
+
+  /* GPSステータス表示（最小限に） */
+  .status-badge {
+    position: absolute;
+    top: 30px;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+                inset -3px -3px 6px var(--shadow-light);
+    opacity: 0.8;
+  }
+
+  /* コンパスデザイン */
+  .compass-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 12px 12px 24px var(--shadow-dark), 
+                -12px -12px 24px var(--shadow-light);
+  }
+
+  .compass-inner {
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 8px 8px 16px var(--shadow-dark), 
+                inset -8px -8px 16px var(--shadow-light);
+  }
+
+  /* 方向を示す矢印 */
+  .direction-arrow-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transition: transform 0.2s ease-out; /* リアルタイム更新のため短めに */
+    z-index: 10;
+  }
+
+  .direction-arrow {
+    position: absolute;
+    top: -15px; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 30px solid var(--accent-green);
+    filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.2));
+  }
+
+  .distance-label {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+
+  .distance-value {
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  
+  .unit {
+    font-size: 20px;
+    font-weight: normal;
+  }
+
+  /* 起動ボタン（センサー許可のため必要） */
+  #startButton {
+    position: absolute;
+    bottom: 40px;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 25px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 6px 6px 12px var(--shadow-dark), 
+                -6px -6px 12px var(--shadow-light);
+  }
+  #startButton:active {
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                inset -4px -4px 8px var(--shadow-light);
+  }
+</style>
+</head>
+<body>
+
+<div class="texture-overlay"></div>
+
+<div class="app-container">
+  <div class="status-badge" id="status">⚡️ GPS待機中</div>
+
+  <div class="compass-container">
+    <div class="direction-arrow-container" id="arrowContainer">
+      <div class="direction-arrow"></div>
+    </div>
+    <div class="compass-inner">
+      <div class="distance-label">残り</div>
+      <div class="distance-value" id="distanceDisplay">--.<span class="unit">km</span></div>
+    </div>
+  </div>
+
+  <button id="startButton">ナビを開始</button>
+</div>
+
+<script>
+  // --- 設定：目的地座標（例：東京タワー） ---
+  const DEST_LAT = 35.6585805;
+  const DEST_LNG = 139.7454329;
+
+  const arrowContainer = document.getElementById('arrowContainer');
+  const distanceDisplay = document.getElementById('distanceDisplay');
+  const statusBadge = document.getElementById('status');
+  const startButton = document.getElementById('startButton');
+
+  let currentLat = null;
+  let currentLng = null;
+  let targetBearing = 0; // 目的地の方位角
+  let deviceHeading = 0; // スマホが向いている方角
+
+  // 1. 2点間の距離を計算する関数 (Haversine formula)
+  function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // 地球の半径(km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  // 2. 2点間の方位角を計算する関数 (北を0度とした時計回りの角度)
+  function calculateBearing(lat1, lon1, lat2, lon2) {
+    const lat1Rad = lat1 * Math.PI / 180;
+    const lat2Rad = lat2 * Math.PI / 180;
+    const lonDiff = (lon2 - lon1) * Math.PI / 180;
+    const y = Math.sin(lonDiff) * Math.cos(lat2Rad);
+    const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(lonDiff);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  }
+
+  // 画面の表示を更新する処理
+  function updateUI() {
+    if (currentLat !== null && currentLng !== null) {
+      // 距離を計算して表示 (小数点第1位まで)
+      const distKm = calculateDistance(currentLat, currentLng, DEST_LAT, DEST_LNG);
+      distanceDisplay.innerHTML = `${distKm.toFixed(1)}<span class="unit">km</span>`;
+
+      // 目的地の方位を計算
+      targetBearing = calculateBearing(currentLat, currentLng, DEST_LAT, DEST_LNG);
+    }
+
+    // 矢印の回転角度 = 目的地の方位 - スマホが向いている方位
+    let rotation = targetBearing - deviceHeading;
+    arrowContainer.style.transform = `rotate(${rotation}deg)`;
+  }
+
+  // コンパスとGPSの起動
+  startButton.addEventListener('click', async () => {
+    startButton.style.display = 'none'; // ボタンを隠す
+    statusBadge.innerText = "⚡️ GPS測位中...";
+
+    // iOS 13+ コンパスの許可リクエスト
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission !== 'granted') {
+          alert('コンパスの利用が許可されませんでした。');
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // デバイスの向きを取得
+    window.addEventListener('deviceorientationabsolute', (event) => {
+      if (event.webkitCompassHeading) {
+        deviceHeading = event.webkitCompassHeading; // iOS用
+      } else if (event.alpha) {
+        deviceHeading = 360 - event.alpha; // Android等用
+      }
+      updateUI();
+    }, true);
+
+    // GPS座標を継続的に取得
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          currentLat = position.coords.latitude;
+          currentLng = position.coords.longitude;
+          statusBadge.innerText = "⚡️ GPS連動中";
+          updateUI();
+        },
+        (error) => {
+          statusBadge.innerText = "⚠️ GPSエラー";
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      );
+    } else {
+      alert("お使いの端末はGPSに対応していません。");
+    }
+  });
+
+</script>
+</body>
+</html>
